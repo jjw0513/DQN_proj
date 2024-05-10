@@ -6,7 +6,7 @@ import math
 import random
 import numpy as np
 import time
-import wandb
+# import wandb
 import gym
 
 from memory import ReplayMemory
@@ -103,20 +103,21 @@ def train(env, n_episodes, render = False) :
         # print("env.instr.s_done:", env.instrs.s_done)
 
         obs = env.reset(seed=123)
+        env.max_steps = 5000
         state = get_state(obs)
         total_reward = 0.0
 
         for i in count() :
             action = select_action(state)
             observation, reward, done, truncated, info = env.step(action)
-            print("action:", action[0].item())  # 어떤 행동을 하는지
-            print("obs:", observation)  # 관측한 observation 프린트
-            print("env.instr.s_done:", env.instrs.s_done)
+            # print("action:", action[0].item())  # 어떤 행동을 하는지
+            # print("obs:", observation)  # 관측한 observation 프린트
+            # print("env.instr.s_done:", env.instrs.s_done)
             #obs, reward, done, info = env.step(action)
             total_reward += reward
 
-            print(f"step={i}, action={action[0].item()}, reward={reward}")
-            print("episodes :", episodes)
+            # print(f"step={i}, action={action[0].item()}, reward={reward}")
+            # print("episodes :", episodes)
             if not done :
                 next_state = get_state(obs)
             else :
@@ -139,6 +140,8 @@ def train(env, n_episodes, render = False) :
                 #wandb.log({"episode_reward": total_reward})  # Wandb에 에피소드 보상을 보고
                 print("total_reward",total_reward)
                 break
+        print(f"step={i}, reward={reward}")
+        print("episodes :", episodes)
         #if episodes % 10 == 0:
         #    print('Total steps: {} \t Episode: {}/{} \t Total reward: {}'.format(steps_done, episodes, i, total_reward))
             # episode : x/y는 episode x당 y번의 action을 취한 것이라 볼 수 있다(해당 에피소드에서 수행된 step의 총수 : t).
@@ -185,13 +188,13 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu" )
 # hyperparameters
 BATCH_SIZE = 32
 GAMMA = 0.99
-EPS_START = 1
-EPS_END = 0.02
+EPS_START = 0.05
+EPS_END = 0.05
 EPS_DECAY = 1000000
 TARGET_UPDATE = 800 #1000
 RENDER = False
-lr = 1e-4
-INITIAL_MEMORY = 50   #10000  #sh edited previous 500
+lr = 1e-2
+INITIAL_MEMORY = 5000   #10000  #sh edited previous 500
 MEMORY_SIZE = 10 * INITIAL_MEMORY
 
 # create networks
@@ -205,12 +208,13 @@ optimizer = optim.Adam(policy_net.parameters(), lr=lr)
 steps_done = 0
 #create env
 # env = GymMoreRedBalls(room_size=10, render_mode='human')
-env = GymMoreRedBalls(room_size=10, render_mode='human') # render_mode 를 human 으로 한 위와 같이하면 실제로 창에 어떻게 행동하는지가 디스플레이됨.
+env = GymMoreRedBalls(room_size=10, render_mode='rgb_array') # render_mode 를 human 으로 한 위와 같이하면 실제로 창에 어떻게 행동하는지가 디스플레이됨.
 env.reset(seed=123)
+env.max_steps = 5000
 
 memory = ReplayMemory(MEMORY_SIZE)
 
-train(env, 1)
+train(env, 100)
 
 torch.save(policy_net, "dqn_redball")
 policy_net = torch.load("dqn_redball")
