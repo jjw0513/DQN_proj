@@ -1,3 +1,5 @@
+import gymnasium
+
 from GymMoreRedBalls import GymMoreRedBalls
 import copy
 from collections import namedtuple
@@ -111,12 +113,16 @@ def train(env, n_episodes, render = False) :
             observation, reward, done, truncated, info = env.step(action)
             print("action:", action[0].item())  # 어떤 행동을 하는지
             print("obs:", observation)  # 관측한 observation 프린트
-            print("env.instr.s_done:", env.instrs.s_done)
+#            print("env.instr.s_done:", env.instrs.s_done)
             #obs, reward, done, info = env.step(action)
             total_reward += reward
 
             print(f"step={i}, action={action[0].item()}, reward={reward}")
             print("episodes :", episodes)
+
+            #if render:
+            #    env.render()
+
             if not done :
                 next_state = get_state(obs)
             else :
@@ -138,6 +144,7 @@ def train(env, n_episodes, render = False) :
             if done:
                 #wandb.log({"episode_reward": total_reward})  # Wandb에 에피소드 보상을 보고
                 print("total_reward",total_reward)
+
                 break
         #if episodes % 10 == 0:
         #    print('Total steps: {} \t Episode: {}/{} \t Total reward: {}'.format(steps_done, episodes, i, total_reward))
@@ -158,12 +165,15 @@ def test(env, n_episodes, policy, render=True):
             total_reward += reward
             print("action:", action[0].item())  # 어떤 행동을 하는지
             print("obs:", observation)  # 관측한 observation 프린트
-            print("env.instr.s_done:", env.instrs.s_done)
+#            print("env.instr.s_done:", env.instrs.s_done)
             # obs, reward, done, info = env.step(action)
             total_reward += reward
             print("testing..")
             print(f"step={i}, action={action[0].item()}, reward={reward}")
             #print("episodes : ", episodes)
+
+            #if render:
+            #    env.render()
 
             if not done:
                 next_state = get_state(obs)
@@ -188,11 +198,11 @@ GAMMA = 0.99
 EPS_START = 1
 EPS_END = 0.02
 EPS_DECAY = 1000000
-TARGET_UPDATE = 800 #1000
+TARGET_UPDATE = 50 #1000
 RENDER = False
-lr = 1e-4
-INITIAL_MEMORY = 50   #10000  #sh edited previous 500
-MEMORY_SIZE = 10 * INITIAL_MEMORY
+lr = 1e-3
+INITIAL_MEMORY = 80    #10000  #sh edited previous 500
+MEMORY_SIZE = 10000 * INITIAL_MEMORY
 
 # create networks
 policy_net = DQN(n_actions=3).to('cpu')
@@ -205,17 +215,18 @@ optimizer = optim.Adam(policy_net.parameters(), lr=lr)
 steps_done = 0
 #create env
 # env = GymMoreRedBalls(room_size=10, render_mode='human')
-env = GymMoreRedBalls(room_size=10, render_mode='human') # render_mode 를 human 으로 한 위와 같이하면 실제로 창에 어떻게 행동하는지가 디스플레이됨.
-env.reset(seed=123)
+#env = GymMoreRedBalls(room_size=10, render_mode='human') # render_mode 를 human 으로 한 위와 같이하면 실제로 창에 어떻게 행동하는지가 디스플레이됨.
+#env.reset(seed=123)
 
+env = gymnasium.make("MiniGrid-Empty-8x8-v0",render_mode='rgb')
 memory = ReplayMemory(MEMORY_SIZE)
-
-train(env, 1)
+env.reset(seed=123)
+train(env, 5)
 
 torch.save(policy_net, "dqn_redball")
 policy_net = torch.load("dqn_redball")
 print("Start Testing..")
-test(env, 1, policy_net, render=False)
+test(env, 1, policy_net)
 
 #for i in range(1000):
 	#action = env.action_space.sample()
