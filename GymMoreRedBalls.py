@@ -258,8 +258,6 @@ class GymMoreRedBalls(RoomGridLevel):
 
     def step(self, action):
         obs_all, reward, terminated, truncated, info = super().step(action)
-        count = 0
-        count +=1
         obs = obs_all['image'][:,:,0]
 
         # If we drop an object, we need to update its position in the environment
@@ -267,10 +265,6 @@ class GymMoreRedBalls(RoomGridLevel):
             self.update_objs_poss()
 
         # If we've successfully completed the mission
-        #status,temp_reward = self.instrs.verify(action)
-        #print(temp_reward, reward)
-        #reward += temp_reward
-        #print(status)
         status = self.instrs.verify(action)
         if status == "success":
             terminated = True
